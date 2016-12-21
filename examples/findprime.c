@@ -33,40 +33,36 @@
 
 #include "iprime.h"
 
-int main(int argc, char *argv[])
-{
-  char   buf[4096];
-  mpz_t  seed;
-  mp_result res;
+int main(int argc, char *argv[]) {
+    char buf[4096];
+    mpz_t seed;
+    mp_result res;
 
-  if(argc < 2) {
-    fprintf(stderr, "Usage: %s <start-value>\n", argv[0]);
-    return 1;
-  }
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <start-value>\n", argv[0]);
+        return 1;
+    }
 
-  mp_int_init(&seed);
-  if((res = mp_int_read_string(&seed, 10, argv[1])) != MP_OK) {
-    fprintf(stderr, "%s: error reading `%s': %d\n", 
-	    argv[0], argv[1], res);
-    return 2;
-  }
+    mp_int_init(&seed);
+    if ((res = mp_int_read_string(&seed, 10, argv[1])) != MP_OK) {
+        fprintf(stderr, "%s: error reading `%s': %d\n", argv[0], argv[1], res);
+        return 2;
+    }
 
-  if(mp_int_compare_value(&seed, 131) <= 0) {
-    fprintf(stderr, "%s: please enter a start value > 131\n",
-	    argv[0]);
-    return 1;
-  }
+    if (mp_int_compare_value(&seed, 131) <= 0) {
+        fprintf(stderr, "%s: please enter a start value > 131\n", argv[0]);
+        return 1;
+    }
 
-  if((res = mp_int_find_prime(&seed)) != MP_TRUE) {
-    fprintf(stderr, "%s: error finding prime: %d\n",
-	    argv[0], res);
-    return 2;
-  }
+    if ((res = mp_int_find_prime(&seed)) != MP_TRUE) {
+        fprintf(stderr, "%s: error finding prime: %d\n", argv[0], res);
+        return 2;
+    }
 
-  mp_int_to_string(&seed, 10, buf, sizeof(buf));
-  printf("=> %s\n", buf);
+    mp_int_to_string(&seed, 10, buf, sizeof(buf));
+    printf("=> %s\n", buf);
 
-  mp_int_clear(&seed);
+    mp_int_clear(&seed);
 
-  return 0;
+    return 0;
 }

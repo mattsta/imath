@@ -44,5 +44,6 @@ mp_result mp_int_find_prime(mp_int z);
 
 #ifdef __cplusplus
 }
+
 #endif
 #endif /* IPRIME_H_ */

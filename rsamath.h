@@ -59,7 +59,7 @@ mp_result rsa_rsavp(mp_int signature, mp_int exp, mp_int mod, mp_int msg);
 
 /* Compute the maximum length in bytes a message can have using PKCS#1
    v.1.5 encoding with the given modulus */
-int       rsa_max_message_len(mp_int mod);
+int rsa_max_message_len(mp_int mod);
 
 /* Encode a raw message per PKCS#1 v.1.5
    buf      - the buffer containing the message
@@ -72,23 +72,24 @@ int       rsa_max_message_len(mp_int mod);
    on output, the contents of the buffer are replaced by the padded
    message.  If there is not enough room, MP_RANGE is returned.
  */
-mp_result rsa_pkcs1v15_encode(unsigned char *buf, int msg_len, 
-			      int buf_len, int tag, random_f filler);
+mp_result rsa_pkcs1v15_encode(unsigned char *buf, int msg_len, int buf_len,
+                              int tag, random_f filler);
 
-/* Decode a PKCS#1 v.1.5 message back to its raw form 
+/* Decode a PKCS#1 v.1.5 message back to its raw form
    buf      - the buffer containing the encoded message
    buf_len  - the length in bytes of the buffer
    tag      - the expected message tag (nonzero byte)
    msg_len  - on output, receives the length of the message content
-   
+
    On output, the message is packed into the first msg_len bytes of
    the buffer, and the rest of the buffer is zeroed.  If the buffer is
    not of the correct form, MP_UNDEF is returned and msg_len is undefined.
  */
-mp_result rsa_pkcs1v15_decode(unsigned char *buf, int buf_len, 
-			      int tag, int *msg_len);
+mp_result rsa_pkcs1v15_decode(unsigned char *buf, int buf_len, int tag,
+                              int *msg_len);
 
 #ifdef __cplusplus
 }
+
 #endif
 #endif /* end RSAMATH_H_ */

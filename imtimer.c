@@ -24,10 +24,10 @@
   SOFTWARE.
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 #include <time.h>
 
 #include <unistd.h>
@@ -41,191 +41,206 @@ double clocks_to_seconds(clock_t start, clock_t end);
 double get_multiply_time(int nt, int prec);
 double get_exptmod_time(int nt, int prec);
 mp_int alloc_values(int nt, int prec);
-void   randomize_values(mp_int values, int nt, int prec);
-void   release_values(mp_int values, int nt);
-void   mp_int_random(mp_int z, int prec);
+void randomize_values(mp_int values, int nt, int prec);
+void release_values(mp_int values, int nt);
+void mp_int_random(mp_int z, int prec);
 
 const int g_mul_factor = 1000;
 
-int main(int argc, char *argv[])
-{
-  int do_mul = 0, do_exp = 0, do_header = 1;
-  int num_tests, precision = default_precision, opt;
-  unsigned int seed = (unsigned int) time(NULL);
+int main(int argc, char *argv[]) {
+    int do_mul = 0, do_exp = 0, do_header = 1;
+    int num_tests, precision = default_precision, opt;
+    unsigned int seed = (unsigned int)time(NULL);
 
-  while ((opt = getopt(argc, argv, "ehmnp:s:t:")) != EOF) {
-    switch (opt) {
-    case 'e':
-      do_exp = 1;
-      break;
-    case 'm':
-      do_mul = 1;
-      break;
-    case 'n':
-      do_header = 0;
-      break;
-    case 'p':
-      precision = atoi(optarg);
-      break;
-    case 's':
-      seed = atoi(optarg);
-      break;
-    case 't':
-      multiply_threshold = (mp_size) atoi(optarg);
-      break;
-    default:
-      fprintf(stderr, "Usage:  imtimer [options] <num-tests>\n\n"
-              "Options understood:\n"
-              " -e        -- test modular exponentiation speed.\n"
-              " -h        -- display this help message.\n"
-              " -m        -- test multiplication speed.\n"
-              " -n        -- no header line.\n"
-              " -p <dig>  -- use values with <dig> digits.\n"
-              " -s <rnd>  -- set random seed to <rnd>.\n"
-              " -t <dig>  -- set recursion threshold to <dig> digits.\n\n");
-      return (opt != 'h');
+    while ((opt = getopt(argc, argv, "ehmnp:s:t:")) != EOF) {
+        switch (opt) {
+        case 'e':
+            do_exp = 1;
+            break;
+        case 'm':
+            do_mul = 1;
+            break;
+        case 'n':
+            do_header = 0;
+            break;
+        case 'p':
+            precision = atoi(optarg);
+            break;
+        case 's':
+            seed = atoi(optarg);
+            break;
+        case 't':
+            multiply_threshold = (mp_size)atoi(optarg);
+            break;
+        default:
+            fprintf(
+                stderr,
+                "Usage:  imtimer [options] <num-tests>\n\n"
+                "Options understood:\n"
+                " -e        -- test modular exponentiation speed.\n"
+                " -h        -- display this help message.\n"
+                " -m        -- test multiplication speed.\n"
+                " -n        -- no header line.\n"
+                " -p <dig>  -- use values with <dig> digits.\n"
+                " -s <rnd>  -- set random seed to <rnd>.\n"
+                " -t <dig>  -- set recursion threshold to <dig> digits.\n\n");
+            return (opt != 'h');
+        }
     }
-  }
 
-  if (optind >= argc) {
-    fprintf(stderr, "Usage:  imtimer [options] <num-tests>\n"
-            "[use \"imtimer -h\" for help with options]\n\n");
-    return 1;
-  }
-  else
-    num_tests = atoi(argv[optind]);
-
-  srand(seed);
-
-  if (num_tests <= 0) {
-    fprintf(stderr, "You must request at least one test.\n");
-    return 1;
-  }
-  if (precision <= 0) {
-    fprintf(stderr, "Precision must be positive.\n");
-    return 1;
-  } 
-  
-  if (do_header)
-    printf("NUM\tPREC\tBITS\tREC\tRESULT\n");
-  printf("%d\t%d\t%d\t%u", num_tests, precision,
-         (int) (precision * MP_DIGIT_BIT), 
-         multiply_threshold);
-
-  if (do_mul) {
-    double m_time = get_multiply_time(num_tests, precision);
-    
-    printf("\tMUL %.3f %.3f", m_time, m_time / num_tests);
-  }
-
-  if (do_exp) {
-    double e_time = get_exptmod_time(num_tests, precision);
-    
-    printf("\tEXP %.3f %.3f", e_time, e_time / num_tests);
-  }
-  fputc('\n', stdout);
-  fflush(stdout);
-
-  return 0;
-}
-
-double clocks_to_seconds(clock_t start, clock_t end)
-{
-  return (double)(end - start) / CLOCKS_PER_SEC;
-}
-
-mp_int alloc_values(int nt, int prec)
-{
-  mp_int out = malloc(nt * sizeof(mpz_t));
-  int i;
-
-  if (out == NULL)
-    return NULL;
-
-  for (i = 0; i < nt; ++i) {
-    if (mp_int_init_size(out + i, prec) != MP_OK) {
-      while (--i >= 0)
-	mp_int_clear(out + i);
-      return NULL;
+    if (optind >= argc) {
+        fprintf(stderr, "Usage:  imtimer [options] <num-tests>\n"
+                        "[use \"imtimer -h\" for help with options]\n\n");
+        return 1;
     }
-  }
-  
-  return out;
+
+    else {
+        num_tests = atoi(argv[optind]);
+    }
+
+    srand(seed);
+
+    if (num_tests <= 0) {
+        fprintf(stderr, "You must request at least one test.\n");
+        return 1;
+    }
+
+    if (precision <= 0) {
+        fprintf(stderr, "Precision must be positive.\n");
+        return 1;
+    }
+
+    if (do_header) {
+        printf("NUM\tPREC\tBITS\tREC\tRESULT\n");
+    }
+
+    printf("%d\t%d\t%d\t%u", num_tests, precision,
+           (int)(precision * MP_DIGIT_BIT), multiply_threshold);
+
+    if (do_mul) {
+        double m_time = get_multiply_time(num_tests, precision);
+
+        printf("\tMUL %.3f %.3f", m_time, m_time / num_tests);
+    }
+
+    if (do_exp) {
+        double e_time = get_exptmod_time(num_tests, precision);
+
+        printf("\tEXP %.3f %.3f", e_time, e_time / num_tests);
+    }
+
+    fputc('\n', stdout);
+    fflush(stdout);
+
+    return 0;
 }
 
-void   randomize_values(mp_int values, int nt, int prec)
-{
-  int i;
-  
-  for (i = 0; i < nt; ++i)
-    mp_int_random(values + i, prec);
+double clocks_to_seconds(clock_t start, clock_t end) {
+    return (double)(end - start) / CLOCKS_PER_SEC;
 }
 
-void   release_values(mp_int values, int nt)
-{
-  int i;
+mp_int alloc_values(int nt, int prec) {
+    mp_int out = malloc(nt * sizeof(mpz_t));
+    int i;
 
-  for (i = 0; i < nt; ++i)
-    mp_int_clear(values + i);
+    if (out == NULL) {
+        return NULL;
+    }
 
-  free(values);
+    for (i = 0; i < nt; ++i) {
+        if (mp_int_init_size(out + i, prec) != MP_OK) {
+            while (--i >= 0) {
+                mp_int_clear(out + i);
+            }
+
+            return NULL;
+        }
+    }
+
+    return out;
 }
 
-double get_multiply_time(int nt, int prec)
-{
-  clock_t start, end;
-  mp_int values;
-  int i;
+void randomize_values(mp_int values, int nt, int prec) {
+    int i;
 
-  if ((values = alloc_values(3, prec)) == NULL)
-    return 0.0;
-  randomize_values(values, 2, prec);
-
-  start = clock(); 
-  for (i = 0; i < nt; ++i)
-    mp_int_mul(values, values + 1, values + 2);
-  end = clock();
-
-  release_values(values, 3);
-
-  return clocks_to_seconds(start, end);
+    for (i = 0; i < nt; ++i) {
+        mp_int_random(values + i, prec);
+    }
 }
 
-double get_exptmod_time(int nt, int prec)
-{
-  clock_t start, end;
-  mp_int values;
-  int i;
+void release_values(mp_int values, int nt) {
+    int i;
 
-  if ((values = alloc_values(4, prec)) == NULL)
-    return 0.0;
-  randomize_values(values, 3, prec);
+    for (i = 0; i < nt; ++i) {
+        mp_int_clear(values + i);
+    }
 
-  start = clock(); 
-  for (i = 0; i < nt; ++i)
-    mp_int_exptmod(values, values + 1, values + 2, values + 3);
-  end = clock();
-
-  release_values(values, 4);
-
-  return clocks_to_seconds(start, end);
+    free(values);
 }
 
-void   mp_int_random(mp_int z, int prec)
-{
-  int i;
+double get_multiply_time(int nt, int prec) {
+    clock_t start, end;
+    mp_int values;
+    int i;
 
-  if (prec > MP_ALLOC(z))
-    prec = MP_ALLOC(z);
+    if ((values = alloc_values(3, prec)) == NULL) {
+        return 0.0;
+    }
 
-  for (i = 0; i < prec; ++i) {
-    mp_digit d = 0;
-    int j;
-    
-    for (j = 0; j < sizeof(d); ++j)
-      d = (d << CHAR_BIT) | (rand() & UCHAR_MAX);
-    
-    z->digits[i] = d;
-  }
-  MP_USED(z) = prec;
+    randomize_values(values, 2, prec);
+
+    start = clock();
+    for (i = 0; i < nt; ++i) {
+        mp_int_mul(values, values + 1, values + 2);
+    }
+
+    end = clock();
+
+    release_values(values, 3);
+
+    return clocks_to_seconds(start, end);
+}
+
+double get_exptmod_time(int nt, int prec) {
+    clock_t start, end;
+    mp_int values;
+    int i;
+
+    if ((values = alloc_values(4, prec)) == NULL) {
+        return 0.0;
+    }
+
+    randomize_values(values, 3, prec);
+
+    start = clock();
+    for (i = 0; i < nt; ++i) {
+        mp_int_exptmod(values, values + 1, values + 2, values + 3);
+    }
+
+    end = clock();
+
+    release_values(values, 4);
+
+    return clocks_to_seconds(start, end);
+}
+
+void mp_int_random(mp_int z, int prec) {
+    int i;
+
+    if (prec > MP_ALLOC(z)) {
+        prec = MP_ALLOC(z);
+    }
+
+    for (i = 0; i < prec; ++i) {
+        mp_digit d = 0;
+        int j;
+
+        for (j = 0; j < sizeof(d); ++j) {
+            d = (d << CHAR_BIT) | (rand() & UCHAR_MAX);
+        }
+
+        z->digits[i] = d;
+    }
+
+    MP_USED(z) = prec;
 }

@@ -34,11 +34,11 @@
   SOFTWARE.
  */
 
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <limits.h>
 
 #include <unistd.h>
 
@@ -57,189 +57,209 @@ mp_result find_strong_prime(mp_int seed, FILE *fb);
 
 typedef mp_result (*find_f)(mp_int, FILE *);
 
-int main(int argc, char *argv[])
-{
-  int       opt, modbits;
-  FILE     *ofp = stdout;
-  mp_result res;
-  find_f    find_func = find_prime;
-  char      tag = 'p';
-  mpz_t     value;
+int main(int argc, char *argv[]) {
+    int opt, modbits;
+    FILE *ofp = stdout;
+    mp_result res;
+    find_f find_func = find_prime;
+    char tag = 'p';
+    mpz_t value;
 
-  /* Process command-line arguments */
-  while((opt = getopt(argc, argv, "s")) != EOF) {
-    switch(opt) {
-    case 's':
-      find_func = find_strong_prime;
-      tag = 'P';
-      break;
-    default:
-      fprintf(stderr, "Usage: randprime [-s] <bits> [<outfile>]\n");
-      return 1;
+    /* Process command-line arguments */
+    while ((opt = getopt(argc, argv, "s")) != EOF) {
+        switch (opt) {
+        case 's':
+            find_func = find_strong_prime;
+            tag = 'P';
+            break;
+        default:
+            fprintf(stderr, "Usage: randprime [-s] <bits> [<outfile>]\n");
+            return 1;
+        }
     }
-  }
-  
-  if(optind >= argc) {
-    fprintf(stderr, "Error:  You must specify the number of significant bits.\n");
-    fprintf(stderr, "Usage: randprime [-s] <bits> [<outfile>]\n");
-    return 1;
-  }
-  modbits = (int) strtol(argv[optind++], NULL, 0);
-  if(modbits < CHAR_BIT) {
-    fprintf(stderr, "Error:  Invalid value for number of significant bits.\n");
-    return 1;
-  }
-  if(modbits % 2 == 1)
-    ++modbits;
 
-  /* Check if output file is specified */
-  if(optind < argc) {
-    if((ofp = fopen(argv[optind], "wt")) == NULL) {
-      fprintf(stderr, "Error:  Unable to open output file for writing.\n"
-	      " - Filename: %s\n"
-	      " - Error:    %s\n", argv[optind], strerror(errno));
-      return 1;
+    if (optind >= argc) {
+        fprintf(stderr,
+                "Error:  You must specify the number of significant bits.\n");
+        fprintf(stderr, "Usage: randprime [-s] <bits> [<outfile>]\n");
+        return 1;
     }
-  }
-  
-  mp_int_init(&value);
-  if ((res = mp_int_randomize(&value, modbits - 1)) != MP_OK) {
-    fprintf(stderr, "Error:  Unable to generate random start value.\n"
-	    " - %s (%d)\n", mp_error_string(res), res);
-    goto EXIT;
-  }
-  fprintf(stderr, "%c: ", tag);
-  find_func(&value, stderr);
-  fputc('\n', stderr);
 
-  /* Write the completed value to the specified output file */
-  {
-    int len;
-    char *obuf;
-
-    len = mp_int_string_len(&value, 10);
-    obuf = malloc(len);
-    mp_int_to_string(&value, 10, obuf, len);
-    fputs(obuf, ofp);
-    fputc('\n', ofp);
-
-    free(obuf);
-  }
-
- EXIT:
-  fclose(ofp);
-  mp_int_clear(&value);
-  return 0;
-}
-
-int randomize(unsigned char *buf, size_t len)
-{
-  FILE *rnd = fopen("/dev/random", "rb");
-  size_t nr;
-
-  if(rnd == NULL)
-    return -1;
-  
-  nr = fread(buf, sizeof(*buf), len, rnd);
-  fclose(rnd);
-  
-  return (int) nr;
-}
-
-mp_result mp_int_randomize(mp_int a, mp_size n_bits)
-{
-  mp_size n_bytes = (n_bits + CHAR_BIT - 1) / CHAR_BIT;
-  unsigned char *buf;
-  mp_result res = MP_OK;
-  
-  if((buf = malloc(n_bytes)) == NULL)
-    return MP_MEMORY;
-  
-  if(randomize(buf, n_bytes) != n_bytes) {
-    res = MP_TRUNC;
-    goto CLEANUP;
-  }
-
-  /* Clear bits beyond the number requested */
-  if(n_bits % CHAR_BIT != 0) {
-    unsigned char b_mask = (1 << (n_bits % CHAR_BIT)) - 1;
-    unsigned char t_mask = (1 << (n_bits % CHAR_BIT)) >> 1;
-
-    buf[0] &= b_mask;
-    buf[0] |= t_mask;
-  }
-
-  /* Set low-order bit to insure value is odd */
-  buf[n_bytes - 1] |= 1;
-
-  res = mp_int_read_unsigned(a, buf, n_bytes);
-
- CLEANUP:
-  memset(buf, 0, n_bytes);
-  free(buf);
-
-  return res;
-}
-
-mp_result find_prime(mp_int seed, FILE *fb)
-{
-  mp_result res;
-  int       count = 0;
-
-  if(mp_int_is_even(seed))
-    if((res = mp_int_add_value(seed, 1, seed)) != MP_OK)
-      return res;
-  
-  while((res = mp_int_is_prime(seed)) == MP_FALSE) {
-    ++count;
-
-    if(fb != NULL && (count % 50) == 0)
-      fputc('.', fb);
-
-    if((res = mp_int_add_value(seed, 2, seed)) != MP_OK)
-      return res;
-  }
-
-  if(res == MP_TRUE && fb != NULL)
-    fputc('+', fb);
-  
-  return res;
-}
-
-mp_result find_strong_prime(mp_int seed, FILE *fb)
-{
-  mp_result res;
-  mpz_t     t;
-
-  mp_int_init(&t);
-  for(;;) {
-    if ((res = find_prime(seed, fb)) != MP_TRUE)
-      break;
-    if ((res = mp_int_copy(seed, &t)) != MP_OK)
-      break;
-
-    if ((res = mp_int_mul_pow2(&t, 1, &t)) != MP_OK ||
-	(res = mp_int_add_value(&t, 1, &t)) != MP_OK) 
-      break;
-
-    if ((res = mp_int_is_prime(&t)) == MP_TRUE) {
-      if (fb != NULL)
-	fputc('!', fb);
-
-      res = mp_int_copy(&t, seed);
-      break;
+    modbits = (int)strtol(argv[optind++], NULL, 0);
+    if (modbits < CHAR_BIT) {
+        fprintf(stderr,
+                "Error:  Invalid value for number of significant bits.\n");
+        return 1;
     }
-    else if (res != MP_FALSE) 
-      break;
 
-    if (fb != NULL)
-      fputc('x', fb);
-    if ((res = mp_int_add_value(seed, 2, seed)) != MP_OK)
-      break;
-  }
+    if (modbits % 2 == 1) {
+        ++modbits;
+    }
 
-  mp_int_clear(&t);
-  return res;
+    /* Check if output file is specified */
+    if (optind < argc) {
+        if ((ofp = fopen(argv[optind], "wt")) == NULL) {
+            fprintf(stderr, "Error:  Unable to open output file for writing.\n"
+                            " - Filename: %s\n"
+                            " - Error:    %s\n",
+                    argv[optind], strerror(errno));
+            return 1;
+        }
+    }
+
+    mp_int_init(&value);
+    if ((res = mp_int_randomize(&value, modbits - 1)) != MP_OK) {
+        fprintf(stderr, "Error:  Unable to generate random start value.\n"
+                        " - %s (%d)\n",
+                mp_error_string(res), res);
+        goto EXIT;
+    }
+
+    fprintf(stderr, "%c: ", tag);
+    find_func(&value, stderr);
+    fputc('\n', stderr);
+
+    /* Write the completed value to the specified output file */
+    {
+        int len;
+        char *obuf;
+
+        len = mp_int_string_len(&value, 10);
+        obuf = malloc(len);
+        mp_int_to_string(&value, 10, obuf, len);
+        fputs(obuf, ofp);
+        fputc('\n', ofp);
+
+        free(obuf);
+    }
+
+EXIT:
+    fclose(ofp);
+    mp_int_clear(&value);
+    return 0;
+}
+
+int randomize(unsigned char *buf, size_t len) {
+    FILE *rnd = fopen("/dev/random", "rb");
+    size_t nr;
+
+    if (rnd == NULL) {
+        return -1;
+    }
+
+    nr = fread(buf, sizeof(*buf), len, rnd);
+    fclose(rnd);
+
+    return (int)nr;
+}
+
+mp_result mp_int_randomize(mp_int a, mp_size n_bits) {
+    mp_size n_bytes = (n_bits + CHAR_BIT - 1) / CHAR_BIT;
+    unsigned char *buf;
+    mp_result res = MP_OK;
+
+    if ((buf = malloc(n_bytes)) == NULL) {
+        return MP_MEMORY;
+    }
+
+    if (randomize(buf, n_bytes) != n_bytes) {
+        res = MP_TRUNC;
+        goto CLEANUP;
+    }
+
+    /* Clear bits beyond the number requested */
+    if (n_bits % CHAR_BIT != 0) {
+        unsigned char b_mask = (1 << (n_bits % CHAR_BIT)) - 1;
+        unsigned char t_mask = (1 << (n_bits % CHAR_BIT)) >> 1;
+
+        buf[0] &= b_mask;
+        buf[0] |= t_mask;
+    }
+
+    /* Set low-order bit to insure value is odd */
+    buf[n_bytes - 1] |= 1;
+
+    res = mp_int_read_unsigned(a, buf, n_bytes);
+
+CLEANUP:
+    memset(buf, 0, n_bytes);
+    free(buf);
+
+    return res;
+}
+
+mp_result find_prime(mp_int seed, FILE *fb) {
+    mp_result res;
+    int count = 0;
+
+    if (mp_int_is_even(seed)) {
+        if ((res = mp_int_add_value(seed, 1, seed)) != MP_OK) {
+            return res;
+        }
+    }
+
+    while ((res = mp_int_is_prime(seed)) == MP_FALSE) {
+        ++count;
+
+        if (fb != NULL && (count % 50) == 0) {
+            fputc('.', fb);
+        }
+
+        if ((res = mp_int_add_value(seed, 2, seed)) != MP_OK) {
+            return res;
+        }
+    }
+
+    if (res == MP_TRUE && fb != NULL) {
+        fputc('+', fb);
+    }
+
+    return res;
+}
+
+mp_result find_strong_prime(mp_int seed, FILE *fb) {
+    mp_result res;
+    mpz_t t;
+
+    mp_int_init(&t);
+    for (;;) {
+        if ((res = find_prime(seed, fb)) != MP_TRUE) {
+            break;
+        }
+
+        if ((res = mp_int_copy(seed, &t)) != MP_OK) {
+            break;
+        }
+
+        if ((res = mp_int_mul_pow2(&t, 1, &t)) != MP_OK ||
+            (res = mp_int_add_value(&t, 1, &t)) != MP_OK) {
+            break;
+        }
+
+        if ((res = mp_int_is_prime(&t)) == MP_TRUE) {
+            if (fb != NULL) {
+                fputc('!', fb);
+            }
+
+            res = mp_int_copy(&t, seed);
+            break;
+        }
+
+        else if (res != MP_FALSE) {
+            break;
+        }
+
+        if (fb != NULL) {
+            fputc('x', fb);
+        }
+
+        if ((res = mp_int_add_value(seed, 2, seed)) != MP_OK) {
+            break;
+        }
+    }
+
+    mp_int_clear(&t);
+    return res;
 }
 
 /* Here there be dragons */

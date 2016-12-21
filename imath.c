@@ -553,7 +553,6 @@ mp_result mp_int_add(mp_int a, mp_int b, mp_int c) {
 
     ua = MP_USED(a);
     ub = MP_USED(b);
-    uc = MP_USED(c);
     max = MAX(ua, ub);
 
     if (MP_SIGN(a) == MP_SIGN(b)) {
@@ -631,7 +630,6 @@ mp_result mp_int_sub(mp_int a, mp_int b, mp_int c) {
 
     ua = MP_USED(a);
     ub = MP_USED(b);
-    uc = MP_USED(c);
     max = MAX(ua, ub);
 
     if (MP_SIGN(a) != MP_SIGN(b)) {
@@ -2027,7 +2025,7 @@ mp_result mp_int_read_binary(mp_int z, unsigned char *buf, int len) {
 
 mp_result mp_int_binary_len(mp_int z) {
     mp_result res = mp_int_count_bits(z);
-    int bytes = mp_int_unsigned_len(z);
+    int bytes;
 
     if (res <= 0) {
         return res;

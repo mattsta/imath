@@ -361,7 +361,7 @@ mp_result mp_int_init(mp_int z) {
 }
 
 mp_int mp_int_alloc(void) {
-    mp_int out = malloc(sizeof(mpz_t));
+    mp_int out = calloc(1, sizeof(mpz_t));
 
     if (out != NULL) {
         mp_int_init(out);
@@ -2109,7 +2109,7 @@ const char *mp_error_string(mp_result res) {
 /* Private functions for internal use.  These make assumptions.           */
 
 STATIC mp_digit *s_alloc(mp_size num) {
-    mp_digit *out = malloc(num * sizeof(mp_digit));
+    mp_digit *out = calloc(num, sizeof(mp_digit));
 
     assert(out != NULL); /* for debugging */
 #if DEBUG > 1
@@ -2136,6 +2136,7 @@ STATIC mp_digit *s_realloc(mp_digit *old, mp_size osize, mp_size nsize) {
 
     memcpy(new, old, osize * sizeof(mp_digit));
 #else
+    (void)osize;
     mp_digit *new = realloc(old, nsize * sizeof(mp_digit));
 
     assert(new != NULL); /* for debugging */

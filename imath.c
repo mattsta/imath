@@ -42,6 +42,9 @@
 #define STATIC static
 #endif
 
+#define NEGATE_I64(v)                                                          \
+    (((v) == INT64_MIN ? (uint64_t)INT64_MAX + 1 : (uint64_t)(-(v))))
+
 const mp_result MP_OK = 0;      /* no error, all is well  */
 const mp_result MP_FALSE = 0;   /* boolean false          */
 const mp_result MP_TRUE = -1;   /* boolean true           */
@@ -1761,7 +1764,7 @@ mp_result mp_int_to_int(mp_int z, mp_small *out) {
     }
 
     if (out) {
-        *out = (sz == MP_NEG) ? -(mp_small)uv : (mp_small)uv;
+        *out = (sz == MP_NEG) ? NEGATE_I64(uv) : (mp_small)uv;
     }
 
     return MP_OK;
@@ -2173,7 +2176,7 @@ STATIC int s_pad(mp_int z, mp_size min) {
 
 /* Note: This will not work correctly when value == MP_SMALL_MIN */
 STATIC void s_fake(mp_int z, mp_small value, mp_digit vbuf[]) {
-    mp_usmall uv = (mp_usmall)(value < 0) ? -value : value;
+    mp_usmall uv = (mp_usmall)(value < 0) ? NEGATE_I64(value) : value;
     s_ufake(z, uv, vbuf);
     if (value < 0) {
         z->sign = MP_NEG;
@@ -2232,7 +2235,7 @@ STATIC int s_ucmp(mp_int a, mp_int b) {
 }
 
 STATIC int s_vcmp(mp_int a, mp_small v) {
-    mp_usmall uv = (mp_usmall)(v < 0) ? -v : v;
+    mp_usmall uv = (mp_usmall)(v < 0) ? NEGATE_I64(v) : v;
     return s_uvcmp(a, uv);
 }
 
@@ -2655,7 +2658,7 @@ STATIC void s_qdiv(mp_int z, mp_size p2) {
 STATIC void s_qmod(mp_int z, mp_size p2) {
     mp_size start = p2 / MP_DIGIT_BIT + 1, rest = p2 % MP_DIGIT_BIT;
     mp_size uz = MP_USED(z);
-    mp_digit mask = (1 << rest) - 1;
+    mp_digit mask = (1ULL << rest) - 1;
 
     if (start <= uz) {
         MP_USED(z) = start;
@@ -2830,7 +2833,8 @@ STATIC int s_norm(mp_int a, mp_int b) {
     mp_digit d = b->digits[MP_USED(b) - 1];
     int k = 0;
 
-    while (d < (mp_digit)(1 << (MP_DIGIT_BIT - 1))) { /* d < (MP_RADIX / 2) */
+    while (d <
+           (mp_digit)(1ULL << (MP_DIGIT_BIT - 1))) { /* d < (MP_RADIX / 2) */
         d <<= 1;
         ++k;
     }

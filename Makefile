@@ -31,13 +31,14 @@
 ##
 ## If building under MacOS 10.1.x, use CC=cc instead.
 ##
-CC=gcc
-CFLAGS+=-ansi -pedantic -Wall -Werror \
+CC=clang
+CFLAGS+=-ansi -pedantic -Wall \
 	-I. $(DFLAGS$(DEBUG)) $(SIZEFLAGS$(USELLONG))
 LIBFLAGS=-dynamiclib
 LIBS=$(DLIBS$(DEBUG))
 
-DFLAGS=-O3 -funroll-loops -finline-functions
+DFLAGS=-g -O3 -march=native -flto -fsanitize=address -fsanitize=undefined # -finline-functions
+#DFLAGS=-g -O3 -march=native -flto -funroll-loops # -finline-functions
 DFLAGSN=$(DFLAGS)
 DFLAGSY=-g -DDEBUG=1
 #DLIBS=

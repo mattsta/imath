@@ -1764,7 +1764,8 @@ mp_result mp_int_to_int(mp_int z, mp_small *out) {
     }
 
     if (out) {
-        *out = (sz == MP_NEG) ? NEGATE_I64(uv) : (mp_small)uv;
+        *out =
+            (sz == MP_NEG) ? (mp_small)NEGATE_I64((mp_small)uv) : (mp_small)uv;
     }
 
     return MP_OK;
@@ -2176,7 +2177,8 @@ STATIC int s_pad(mp_int z, mp_size min) {
 
 /* Note: This will not work correctly when value == MP_SMALL_MIN */
 STATIC void s_fake(mp_int z, mp_small value, mp_digit vbuf[]) {
-    mp_usmall uv = (mp_usmall)(value < 0) ? NEGATE_I64(value) : value;
+    mp_usmall uv =
+        (mp_usmall)(value < 0) ? NEGATE_I64(value) : (mp_usmall)value;
     s_ufake(z, uv, vbuf);
     if (value < 0) {
         z->sign = MP_NEG;
@@ -2235,7 +2237,7 @@ STATIC int s_ucmp(mp_int a, mp_int b) {
 }
 
 STATIC int s_vcmp(mp_int a, mp_small v) {
-    mp_usmall uv = (mp_usmall)(v < 0) ? NEGATE_I64(v) : v;
+    mp_usmall uv = (mp_usmall)(v < 0) ? NEGATE_I64(v) : (mp_usmall)v;
     return s_uvcmp(a, uv);
 }
 
@@ -3134,7 +3136,10 @@ STATIC mp_result s_udiv_knuth(mp_int u, mp_int v) {
     n = MP_USED(v);
     m = MP_USED(u) - n;
     assert(n > 1);
+#if 0
+    /* m is unsigned, it's always >= 0 */
     assert(m >= 0);
+#endif
 
     /************************************************************/
     /* D1: Normalize.

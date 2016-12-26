@@ -122,8 +122,9 @@ STATIC const double s_log2[] = {
         mp_int z_ = (Z);                                                       \
         mp_size uz_ = (z_)->used;                                              \
         mp_digit *dz_ = (z_)->digits + uz_ - 1;                                \
-        while (uz_ > 1 && (*dz_-- == 0))                                       \
-            --uz_;                                                             \
+        while (uz_ > 1 && (*dz_-- == 0)) {                                     \
+            uz_--;                                                             \
+        }                                                                      \
         (z_)->used = uz_;                                                      \
     } while (0)
 
@@ -146,16 +147,20 @@ STATIC const double s_log2[] = {
     mpz_t temp[(N)];                                                           \
     int32_t last__ = 0
 #define CLEANUP_TEMP()                                                         \
+    do {                                                                       \
     CLEANUP:                                                                   \
-    while (--last__ >= 0)                                                      \
-    mp_int_clear(TEMP(last__))
+        while (--last__ >= 0) {                                                \
+            mp_int_clear(TEMP(last__));                                        \
+        }                                                                      \
+    } while (0)
 #define TEMP(K) (temp + (K))
 #define LAST_TEMP() TEMP(last__)
 #define SETUP(E)                                                               \
     do {                                                                       \
-        if ((res = (E)) != MP_OK)                                              \
+        if ((res = (E)) != MP_OK) {                                            \
             goto CLEANUP;                                                      \
-        ++(last__);                                                            \
+        }                                                                      \
+        (last__)++;                                                            \
     } while (0)
 
 /* Compare value to zero. */
@@ -2004,7 +2009,7 @@ mp_result mp_int_read_binary(mp_int z, void *buf_, size_t len) {
     }
 
     dz = z->digits;
-    for (tmp = buf, i = len; i > 0; --i, ++tmp) {
+    for (tmp = buf, i = len; i > 0; i--, ++tmp) {
         s_qmul(z, (mp_size)CHAR_BIT);
         *dz |= *tmp;
     }
@@ -2062,7 +2067,7 @@ mp_result mp_int_read_unsigned(mp_int z, void *buf_, size_t len) {
 
     mp_int_zero(z);
 
-    for (tmp = buf, i = len; i > 0; --i, ++tmp) {
+    for (tmp = buf, i = len; i > 0; i--, ++tmp) {
         (void)s_qmul(z, CHAR_BIT);
         *z->digits |= *tmp;
     }
@@ -2919,7 +2924,7 @@ STATIC mp_result s_embar(mp_int a, mp_int b, mp_int m, mp_int mu, mp_int c) {
     while (db < dbt) {
         int32_t i;
 
-        for (d = *db, i = MP_DIGIT_BIT; i > 0; --i, d >>= 1) {
+        for (d = *db, i = MP_DIGIT_BIT; i > 0; i--, d >>= 1) {
             if (d & 1) {
                 /* The use of a second temporary avoids allocation */
                 UMUL(c, a, TEMP(0));
@@ -3357,7 +3362,7 @@ STATIC void s_2comp(void *buf_, size_t len) {
     int32_t i;
     unsigned short s = 1;
 
-    for (i = len - 1; i >= 0; --i) {
+    for (i = len - 1; i >= 0; i--) {
         uint8_t c = ~buf[i];
 
         s = c + s;
@@ -3382,7 +3387,7 @@ STATIC mp_result s_tobin(mp_int z, void *buf_, size_t *limpos, int32_t pad) {
         mp_digit d = *dz++;
         int32_t i;
 
-        for (i = sizeof(mp_digit); i > 0 && pos < limit; --i) {
+        for (i = sizeof(mp_digit); i > 0 && pos < limit; i--) {
             buf[pos++] = (uint8_t)d;
             d >>= CHAR_BIT;
 
@@ -3423,8 +3428,9 @@ void s_print(char *tag, mp_int z) {
 
     fprintf(stderr, "%s: %c ", tag, (z->sign == MP_NEG) ? '-' : '+');
 
-    for (i = z->used - 1; i >= 0; --i)
+    for (i = z->used - 1; i >= 0; i--) {
         fprintf(stderr, "%0*X", (int)(MP_DIGIT_BIT / 4), z->digits[i]);
+    }
 
     fputc('\n', stderr);
 }
@@ -3434,8 +3440,9 @@ void s_print_buf(char *tag, mp_digit *buf, mp_size num) {
 
     fprintf(stderr, "%s: ", tag);
 
-    for (i = num - 1; i >= 0; --i)
+    for (i = num - 1; i >= 0; i--) {
         fprintf(stderr, "%0*X", (int)(MP_DIGIT_BIT / 4), buf[i]);
+    }
 
     fputc('\n', stderr);
 }

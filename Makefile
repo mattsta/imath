@@ -44,10 +44,7 @@ DFLAGSY=-g -DDEBUG=1
 #DLIBS=
 #DLIBSY=-lefence
 
-## If USELONG=N, disable the use of the "long long" data type; it is
-## enabled by default even though it is non-standard.  Define
-## USELONG=Y to explicitly enable the use of "long long"
-SIZEFLAGS = -std=c99 -DUSE_64BIT_WORDS
+SIZEFLAGS = -std=c99
 SIZEFLAGSN = -std=c99
 SIZEFLAGSY = $(SIZEFLAGS)
 

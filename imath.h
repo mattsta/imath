@@ -53,9 +53,6 @@ typedef uint32_t mp_size;
 typedef int64_t mp_small;   /* must be a signed type */
 typedef uint64_t mp_usmall; /* must be an unsigned type */
 
-/* Force building with uint64_t so that the library builds consistently
- * whether we build from the makefile or by embedding imath in another project.
- */
 typedef uint32_t mp_digit;
 typedef uint64_t mp_word;
 
@@ -66,11 +63,6 @@ typedef struct mpz {
     mp_size used;
     mp_sign sign;
 } mpz_t, *mp_int;
-
-#define MP_DIGITS(Z) ((Z)->digits)
-#define MP_ALLOC(Z) ((Z)->alloc)
-#define MP_USED(Z) ((Z)->used)
-#define MP_SIGN(Z) ((Z)->sign)
 
 #define MP_DIGIT_BIT (sizeof(mp_digit) * 8)
 #define MP_WORD_BIT (sizeof(mp_word) * 8)

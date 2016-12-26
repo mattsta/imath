@@ -227,8 +227,8 @@ double get_exptmod_time(int nt, int prec) {
 void mp_int_random(mp_int z, int prec) {
     int i;
 
-    if (prec > MP_ALLOC(z)) {
-        prec = MP_ALLOC(z);
+    if (prec > (z)->alloc) {
+        prec = (z)->alloc;
     }
 
     for (i = 0; i < prec; ++i) {
@@ -242,5 +242,5 @@ void mp_int_random(mp_int z, int prec) {
         z->digits[i] = d;
     }
 
-    MP_USED(z) = prec;
+    (z)->used = prec;
 }

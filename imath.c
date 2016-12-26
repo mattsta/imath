@@ -345,12 +345,12 @@ void s_print_buf(char *tag, mp_digit *buf, mp_size num);
 #endif
 
 mp_result mp_int_init(mp_int z) {
-    if (z == NULL) {
+    if (!z) {
         return MP_BADARG;
     }
 
     z->single = 0;
-    z->digits = &(z->single);
+    z->digits = &z->single;
     z->alloc = 1;
     z->used = 1;
     z->sign = MP_ZPOS;
@@ -448,12 +448,8 @@ mp_result mp_int_set_uvalue(mp_int z, mp_usmall uvalue) {
 }
 
 void mp_int_clear(mp_int z) {
-    if (z == NULL) {
-        return;
-    }
-
-    if (z->digits != NULL) {
-        if (z->digits != &(z->single)) {
+    if (z && z->digits) {
+        if (z->digits != &z->single) {
             s_free(z->digits);
         }
 
@@ -462,10 +458,10 @@ void mp_int_clear(mp_int z) {
 }
 
 void mp_int_free(mp_int z) {
-    NRCHECK(z != NULL);
-
-    mp_int_clear(z);
-    free(z); /* note: NOT s_free() */
+    if (z) {
+        mp_int_clear(z);
+        free(z); /* note: NOT s_free() */
+    }
 }
 
 mp_result mp_int_copy(mp_int a, mp_int c) {
@@ -497,12 +493,12 @@ void mp_int_swap(mp_int a, mp_int c) {
         *a = *c;
         *c = tmp;
 
-        if (a->digits == &(c->single)) {
-            a->digits = &(a->single);
+        if (a->digits == &c->single) {
+            a->digits = &a->single;
         }
 
-        if (c->digits == &(a->single)) {
-            c->digits = &(c->single);
+        if (c->digits == &a->single) {
+            c->digits = &c->single;
         }
     }
 }
@@ -743,7 +739,7 @@ mp_result mp_int_mul(mp_int a, mp_int b, mp_int c) {
        using, and fix up its fields to reflect that.
      */
     if (out != c->digits) {
-        if ((void *)c->digits != (void *)c) {
+        if ((void *)c->digits != (void *)&c->single) {
             s_free(c->digits);
         }
 
@@ -813,7 +809,7 @@ mp_result mp_int_sqr(mp_int a, mp_int c) {
        reflect the new digit array it's using
      */
     if (out != c->digits) {
-        if ((void *)c->digits != (void *)c) {
+        if ((void *)c->digits != (void *)&c->single) {
             s_free(c->digits);
         }
 
@@ -2154,7 +2150,7 @@ STATIC int32_t s_pad(mp_int z, mp_size min) {
         mp_size nsize = ROUND_PREC(min);
         mp_digit *tmp;
 
-        if ((void *)z->digits == (void *)z) {
+        if ((void *)z->digits == (void *)&z->single) {
             if ((tmp = s_alloc(nsize)) == NULL) {
                 return 0;
             }

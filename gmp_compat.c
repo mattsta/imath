@@ -441,7 +441,7 @@ static unsigned long get_long_bits(mp_int op) {
      * rest of the imath library. The two step shift is used to accomedate
      * architectures that don't deal well with 32-bit shifts. */
     mp_size num_digits_in_long = sizeof(unsigned long) / sizeof(mp_digit);
-    mp_digit *digits = MP_DIGITS(op);
+    mp_digit *digits = (op)->digits;
     unsigned long out = 0;
     int i;
 
@@ -501,7 +501,7 @@ long GMPZAPI(get_si)(mp_int op) {
     uout &= (~(1UL << long_msb));
 
     /* convert to negative if needed based on sign of op */
-    if (MP_SIGN(op) == MP_NEG) {
+    if ((op)->sign == MP_NEG) {
         uout = 0 - uout;
     }
 
@@ -763,7 +763,7 @@ void *GMPZAPI(export)(void *rop, size_t *countp, int order, size_t size,
     /* Initialize dst and src pointers */
     dst = (unsigned char *)rop + (order >= 0 ? (num_words - 1) * size : 0) +
           (endian >= 0 ? size - 1 : 0);
-    src = MP_DIGITS(op);
+    src = (op)->digits;
     src_bits = MP_DIGIT_BIT;
 
     word_offset = (endian >= 0 ? size : -size) + (order < 0 ? size : -size);
@@ -834,7 +834,7 @@ void GMPZAPI(import)(mp_int rop, size_t count, int order, size_t size,
     /* Copy bytes */
     src = (const unsigned char *)op + (order >= 0 ? (count - 1) * size : 0) +
           (endian >= 0 ? size - 1 : 0);
-    dst = MP_DIGITS(tmp);
+    dst = (tmp)->digits;
     dst_bits = 0;
 
     word_offset = (endian >= 0 ? size : -size) + (order < 0 ? size : -size);
@@ -854,17 +854,17 @@ void GMPZAPI(import)(mp_int rop, size_t count, int order, size_t size,
         src += word_offset;
     }
 
-    MP_USED(tmp) = num_digits;
+    (tmp)->used = num_digits;
 
     /* Remove leading zeros from number */
     {
-        mp_size uz_ = MP_USED(tmp);
-        mp_digit *dz_ = MP_DIGITS(tmp) + uz_ - 1;
+        mp_size uz_ = (tmp)->used;
+        mp_digit *dz_ = (tmp)->digits + uz_ - 1;
         while (uz_ > 1 && (*dz_-- == 0)) {
             --uz_;
         }
 
-        MP_USED(tmp) = uz_;
+        (tmp)->used = uz_;
     }
 
     /* Copy to destination */

@@ -39,8 +39,6 @@ int g_radix = 10; /* use this radix for output */
 mp_result arctan(mp_small radix, mp_small mul, mp_small x, mp_small prec,
                  mp_int sum);
 
-char g_buf[4096];
-
 int main(int argc, char *argv[]) {
     mp_result res;
     mpz_t sum1, sum2;
@@ -101,8 +99,10 @@ int main(int argc, char *argv[]) {
 
     end = clock();
 
-    mp_int_to_string(&sum1, g_radix, g_buf, sizeof(g_buf));
+    char *g_buf = malloc(ndigits * 2);
+    mp_int_to_string(&sum1, g_radix, g_buf, ndigits * 2);
     printf("%c.%s\n", g_buf[0], g_buf + 1);
+    free(g_buf);
 
     fprintf(stderr, "Computation took %.2f sec.\n",
             (double)(end - start) / CLOCKS_PER_SEC);

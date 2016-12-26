@@ -1753,7 +1753,7 @@ mp_result mp_int_to_int(mp_int z, mp_small *out) {
     while (uz > 0) {
         uv <<= MP_DIGIT_BIT / 2;
         uv = (uv << (MP_DIGIT_BIT / 2)) | *dz--;
-        --uz;
+        uz--;
     }
 
     if (out) {
@@ -1784,7 +1784,7 @@ mp_result mp_int_to_uint(mp_int z, mp_usmall *out) {
     while (uz > 0) {
         uv <<= MP_DIGIT_BIT / 2;
         uv = (uv << (MP_DIGIT_BIT / 2)) | *dz--;
-        --uz;
+        uz--;
     }
 
     if (out) {
@@ -1816,13 +1816,13 @@ mp_result mp_int_to_string(mp_int z, mp_size radix, char *str, size_t limit) {
 
         if (z->sign == MP_NEG) {
             *str++ = '-';
-            --limit;
+            limit--;
         }
 
         h = str;
 
         /* Generate digits in reverse order until finished or limit reached */
-        for (/* */; limit > 0; --limit) {
+        for (; limit > 0; limit--) {
             mp_digit d;
 
             if ((cmp = CMPZ(&tmp)) == 0) {
@@ -1955,7 +1955,7 @@ mp_result mp_int_count_bits(mp_int z) {
         return 1;
     }
 
-    --uz;
+    uz--;
     nbits = uz * MP_DIGIT_BIT;
     d = z->digits[uz];
 
@@ -2191,9 +2191,10 @@ STATIC void s_ufake(mp_int z, mp_usmall value, mp_digit vbuf[]) {
 }
 
 STATIC int32_t s_cdig(mp_digit *da, mp_digit *db, mp_size len) {
-    mp_digit *dat = da + len - 1, *dbt = db + len - 1;
+    mp_digit *dat = da + len - 1;
+    mp_digit *dbt = db + len - 1;
 
-    for (/* */; len != 0; --len, --dat, --dbt) {
+    for (; len != 0; len--, dat--, dbt--) {
         if (*dat > *dbt) {
             return 1;
         } else if (*dat < *dbt) {
@@ -2257,14 +2258,14 @@ STATIC mp_digit s_uadd(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
     }
 
     /* Add corresponding digits until the shorter number runs out */
-    for (pos = 0; pos < size_b; ++pos, ++da, ++db, ++dc) {
+    for (pos = 0; pos < size_b; pos++, da++, db++, dc++) {
         w = w + (mp_word)*da + (mp_word)*db;
         *dc = LOWER_HALF(w);
         w = UPPER_HALF(w);
     }
 
     /* Propagate carries as far as necessary */
-    for (/* */; pos < size_a; ++pos, ++da, ++dc) {
+    for (; pos < size_a; pos++, da++, dc++) {
         w = w + *da;
 
         *dc = LOWER_HALF(w);
@@ -2284,7 +2285,7 @@ STATIC void s_usub(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
     assert(size_a >= size_b);
 
     /* Subtract corresponding digits and propagate borrow */
-    for (pos = 0; pos < size_b; ++pos, ++da, ++db, ++dc) {
+    for (pos = 0; pos < size_b; pos++, da++, db++, dc++) {
         w = ((mp_word)MP_DIGIT_MAX + 1 + /* MP_RADIX */
              (mp_word)*da) -
             w - (mp_word)*db;
@@ -2294,7 +2295,7 @@ STATIC void s_usub(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
     }
 
     /* Finish the subtraction for remaining upper digits of da */
-    for (/* */; pos < size_a; ++pos, ++da, ++dc) {
+    for (; pos < size_a; pos++, da++, dc++) {
         w = ((mp_word)MP_DIGIT_MAX + 1 + /* MP_RADIX */
              (mp_word)*da) -
             w;
@@ -2399,7 +2400,7 @@ STATIC void s_umul(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
     mp_size a, b;
     mp_word w;
 
-    for (a = 0; a < size_a; ++a, ++dc, ++da) {
+    for (a = 0; a < size_a; ++a, dc++, da++) {
         mp_digit *dct = dc;
         mp_digit *dbt = db;
 
@@ -2408,7 +2409,7 @@ STATIC void s_umul(mp_digit *da, mp_digit *db, mp_digit *dc, mp_size size_a,
         }
 
         w = 0;
-        for (b = 0; b < size_b; ++b, ++dbt, ++dct) {
+        for (b = 0; b < size_b; ++b, dbt++, dct++) {
             w = (mp_word)*da * (mp_word)*dbt + w + (mp_word)*dct;
 
             *dct = LOWER_HALF(w);
@@ -2478,8 +2479,9 @@ STATIC void s_usqr(mp_digit *da, mp_digit *dc, mp_size size_a) {
     mp_size i, j;
     mp_word w;
 
-    for (i = 0; i < size_a; ++i, dc += 2, ++da) {
-        mp_digit *dct = dc, *dat = da;
+    for (i = 0; i < size_a; i++, dc += 2, da++) {
+        mp_digit *dct = dc;
+        mp_digit *dat = da;
 
         if (*da == 0) {
             continue;
@@ -2489,12 +2491,13 @@ STATIC void s_usqr(mp_digit *da, mp_digit *dc, mp_size size_a) {
         w = (mp_word)*dat * (mp_word)*dat + (mp_word)*dct;
         *dct = LOWER_HALF(w);
         w = UPPER_HALF(w);
-        ++dat;
-        ++dct;
+        dat++;
+        dct++;
 
-        for (j = i + 1; j < size_a; ++j, ++dat, ++dct) {
+        for (j = i + 1; j < size_a; j++, dat++, dct++) {
             mp_word t = (mp_word)*da * (mp_word)*dat;
-            mp_word u = w + (mp_word)*dct, ov = 0;
+            mp_word u = w + (mp_word)*dct;
+            mp_word ov = 0;
 
             /* Check if doubling t will overflow a word */
             if (HIGH_BIT_SET(t)) {
@@ -2521,7 +2524,7 @@ STATIC void s_usqr(mp_digit *da, mp_digit *dc, mp_size size_a) {
         w = w + *dct;
         *dct = (mp_digit)w;
         while ((w = UPPER_HALF(w)) != 0) {
-            ++dct;
+            dct++;
             w = w + *dct;
             *dct = LOWER_HALF(w);
         }
@@ -2539,7 +2542,7 @@ STATIC void s_dadd(mp_int a, mp_digit b) {
     *da++ = LOWER_HALF(w);
     w = UPPER_HALF(w);
 
-    for (ua -= 1; ua > 0; --ua, ++da) {
+    for (ua -= 1; ua > 0; ua--, da++) {
         w = (mp_word)*da + w;
 
         *da = LOWER_HALF(w);
@@ -2561,7 +2564,7 @@ STATIC void s_dmul(mp_int a, mp_digit b) {
         w = (mp_word)*da * b + w;
         *da++ = LOWER_HALF(w);
         w = UPPER_HALF(w);
-        --ua;
+        ua--;
     }
 
     if (w) {
@@ -2578,7 +2581,7 @@ STATIC void s_dbmul(mp_digit *da, mp_digit b, mp_digit *dc, mp_size size_a) {
 
         *dc++ = LOWER_HALF(w);
         w = UPPER_HALF(w);
-        --size_a;
+        size_a--;
     }
 
     if (w) {
@@ -2591,7 +2594,7 @@ STATIC mp_digit s_ddiv(mp_int a, mp_digit b) {
     mp_size ua = a->used;
     mp_digit *da = a->digits + ua - 1;
 
-    for (/* */; ua > 0; --ua, --da) {
+    for (; ua > 0; ua--, da--) {
         w = (w << MP_DIGIT_BIT) | *da;
 
         if (w >= b) {
@@ -2638,7 +2641,7 @@ STATIC void s_qdiv(mp_int z, mp_size p2) {
         uz = z->used;
         dz = z->digits + uz - 1;
 
-        for (/* */; uz > 0; --uz, --dz) {
+        for (; uz > 0; uz--, dz--) {
             save = *dz;
 
             *dz = (*dz >> nbits) | (d << up);
@@ -2742,7 +2745,7 @@ STATIC int32_t s_qsub(mp_int z, mp_size p2) {
         return 0;
     }
 
-    for (pos = 0, zp = z->digits; pos < tdig; ++pos, ++zp) {
+    for (pos = 0, zp = z->digits; pos < tdig; pos++, zp++) {
         w = ((mp_word)MP_DIGIT_MAX + 1) - w - (mp_word)*zp;
 
         *zp = LOWER_HALF(w);
@@ -2770,7 +2773,7 @@ STATIC int32_t s_dp2k(mp_int z) {
 
     while (*dp == 0) {
         k += MP_DIGIT_BIT;
-        ++dp;
+        dp++;
     }
 
     d = *dp;
@@ -2792,7 +2795,7 @@ STATIC int32_t s_isp2(mp_int z) {
         }
 
         k += MP_DIGIT_BIT;
-        --uz;
+        uz--;
     }
 
     d = *dz;
@@ -2801,7 +2804,7 @@ STATIC int32_t s_isp2(mp_int z) {
             return -1;
         }
 
-        ++k;
+        k++;
         d >>= 1;
     }
 
@@ -2947,7 +2950,7 @@ STATIC mp_result s_embar(mp_int a, mp_int b, mp_int m, mp_int mu, mp_int c) {
             mp_int_copy(TEMP(0), a);
         }
 
-        ++db;
+        db++;
     }
 
     /* Take care of highest-order digit */
@@ -3402,7 +3405,7 @@ STATIC mp_result s_tobin(mp_int z, void *buf_, size_t *limpos, int32_t pad) {
             break;
         }
 
-        --uz;
+        uz--;
     }
 
     if (pad != 0 && (buf[pos - 1] >> (CHAR_BIT - 1))) {

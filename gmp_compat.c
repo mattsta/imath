@@ -456,7 +456,7 @@ static unsigned long get_long_bits(mp_int op) {
 
 /* gmp: mpz_get_ui */
 unsigned long GMPZAPI(get_ui)(mp_int op) {
-    unsigned long out;
+    mp_usmall out;
 
     /* Try a standard conversion that fits into an unsigned long */
     mp_result res = mp_int_to_uint(op, &out);
@@ -476,7 +476,7 @@ unsigned long GMPZAPI(get_ui)(mp_int op) {
 
 /* gmp: mpz_get_si */
 long GMPZAPI(get_si)(mp_int op) {
-    long out;
+    mp_small out;
     unsigned long uout;
     int long_msb;
 
@@ -689,7 +689,7 @@ unsigned long GMPZAPI(fdiv_q_ui)(mp_int q, mp_int n, unsigned long d) {
     mp_int r = &rz;
     mpz_t orig_nz;
     mp_int orig_n = &orig_nz;
-    unsigned long rl;
+    mp_usmall rl;
     CHECK(mp_int_init_uvalue(temp, d));
     CHECK(mp_int_init(r));
     /* Make a copy of n in case n and q overlap */

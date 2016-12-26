@@ -24,34 +24,40 @@
   SOFTWARE.
  */
 
-#ifndef IMATH_H_
-#define IMATH_H_
+#pragma once
 
 #include <limits.h>
 #include <stdint.h>
+#include <unistd.h> /* size_t */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
-typedef unsigned char mp_sign;
-typedef unsigned int mp_size;
-typedef int mp_result;
-typedef long mp_small;           /* must be a signed type */
-typedef unsigned long mp_usmall; /* must be an unsigned type */
+typedef enum mp_result {
+    MP_OK = 0,      /* no error, all is well  */
+    MP_MEMORY = -2, /* out of memory          */
+    MP_RANGE = -3,  /* argument out of range  */
+    MP_UNDEF = -4,  /* result undefined       */
+    MP_TRUNC = -5,  /* output truncated       */
+    MP_BADARG = -6, /* invalid null argument  */
+} mp_result;
+
+#define MP_MINERR MP_BADARG
+
+typedef enum mp_boolean {
+    MP_TRUE = 0,
+    MP_FALSE = -1
+} mp_boolean;
+
+typedef uint8_t mp_sign;
+typedef uint32_t mp_size;
+typedef int64_t mp_small;   /* must be a signed type */
+typedef uint64_t mp_usmall; /* must be an unsigned type */
 
 /* Force building with uint64_t so that the library builds consistently
  * whether we build from the makefile or by embedding imath in another project.
  */
-#undef USE_64BIT_WORDS
-#define USE_64BIT_WORDS
-#ifdef USE_64BIT_WORDS
 typedef uint32_t mp_digit;
 typedef uint64_t mp_word;
-#else
-typedef uint16_t mp_digit;
-typedef uint32_t mp_word;
-#endif
 
 typedef struct mpz {
     mp_digit single;
@@ -66,30 +72,15 @@ typedef struct mpz {
 #define MP_USED(Z) ((Z)->used)
 #define MP_SIGN(Z) ((Z)->sign)
 
-extern const mp_result MP_OK;
-extern const mp_result MP_FALSE;
-extern const mp_result MP_TRUE;
-extern const mp_result MP_MEMORY;
-extern const mp_result MP_RANGE;
-extern const mp_result MP_UNDEF;
-extern const mp_result MP_TRUNC;
-extern const mp_result MP_BADARG;
-extern const mp_result MP_MINERR;
+#define MP_DIGIT_BIT (sizeof(mp_digit) * 8)
+#define MP_WORD_BIT (sizeof(mp_word) * 8)
+#define MP_SMALL_MIN INT64_MIN
+#define MP_SMALL_MAX INT64_MAX
+#define MP_USMALL_MIN UINT64_MIN
+#define MP_USMALL_MAX UINT64_MAX
 
-#define MP_DIGIT_BIT (sizeof(mp_digit) * CHAR_BIT)
-#define MP_WORD_BIT (sizeof(mp_word) * CHAR_BIT)
-#define MP_SMALL_MIN LONG_MIN
-#define MP_SMALL_MAX LONG_MAX
-#define MP_USMALL_MIN ULONG_MIN
-#define MP_USMALL_MAX ULONG_MAX
-
-#ifdef USE_64BIT_WORDS
 #define MP_DIGIT_MAX (UINT32_MAX * UINT64_C(1))
 #define MP_WORD_MAX (UINT64_MAX)
-#else
-#define MP_DIGIT_MAX (UINT16_MAX * 1UL)
-#define MP_WORD_MAX (UINT32_MAX * 1UL)
-#endif
 
 #define MP_MIN_RADIX 2
 #define MP_MAX_RADIX 36
@@ -184,7 +175,7 @@ mp_result mp_int_to_uint(mp_int z, mp_usmall *out);
 
 /* Convert to nul-terminated string with the specified radix, writing at
    most limit characters including the nul terminator  */
-mp_result mp_int_to_string(mp_int z, mp_size radix, char *str, int limit);
+mp_result mp_int_to_string(mp_int z, mp_size radix, char *str, size_t limit);
 
 /* Return the number of characters required to represent
    z in the given radix.  May over-estimate. */
@@ -199,19 +190,19 @@ mp_result mp_int_read_cstring(mp_int z, mp_size radix, const char *str,
 mp_result mp_int_count_bits(mp_int z);
 
 /* Convert z to two's complement binary, writing at most limit bytes */
-mp_result mp_int_to_binary(mp_int z, unsigned char *buf, int limit);
+mp_result mp_int_to_binary(mp_int z, void *buf, size_t limit);
 
 /* Read a two's complement binary value into z from the given buffer */
-mp_result mp_int_read_binary(mp_int z, unsigned char *buf, int len);
+mp_result mp_int_read_binary(mp_int z, void *buf, size_t len);
 
 /* Return the number of bytes required to represent z in binary. */
 mp_result mp_int_binary_len(mp_int z);
 
 /* Convert z to unsigned binary, writing at most limit bytes */
-mp_result mp_int_to_unsigned(mp_int z, unsigned char *buf, int limit);
+mp_result mp_int_to_unsigned(mp_int z, void *buf, size_t limit);
 
 /* Read an unsigned binary value into z from the given buffer */
-mp_result mp_int_read_unsigned(mp_int z, unsigned char *buf, int len);
+mp_result mp_int_read_unsigned(mp_int z, void *buf, size_t len);
 
 /* Return the number of bytes required to represent z as unsigned output */
 mp_result mp_int_unsigned_len(mp_int z);
@@ -224,8 +215,4 @@ void s_print(char *tag, mp_int z);
 void s_print_buf(char *tag, mp_digit *buf, mp_size num);
 #endif
 
-#ifdef __cplusplus
-}
-
-#endif
-#endif /* end IMATH_H_ */
+__END_DECLS

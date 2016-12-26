@@ -43,10 +43,7 @@ typedef enum mp_result {
 
 #define MP_MINERR MP_BADARG
 
-typedef enum mp_boolean {
-    MP_TRUE = 0,
-    MP_FALSE = -1
-} mp_boolean;
+typedef enum mp_boolean { MP_TRUE = 0, MP_FALSE = -1 } mp_boolean;
 
 typedef uint8_t mp_sign;
 typedef uint32_t mp_size;
@@ -57,11 +54,11 @@ typedef uint32_t mp_digit;
 typedef uint64_t mp_word;
 
 typedef struct mpz {
-    mp_digit single;
-    mp_digit *digits;
-    mp_size alloc;
-    mp_size used;
-    mp_sign sign;
+    mp_digit *digits; /* ptr */
+    mp_digit single;  /* uint32_t */
+    mp_size alloc;    /* uint32_t */
+    mp_size used;     /* uint32_t */
+    mp_sign sign;     /* uint32_t */
 } mpz_t, *mp_int;
 
 #define MP_DIGIT_BIT (sizeof(mp_digit) * 8)

@@ -10,8 +10,8 @@ int main(int argc, char *argv[]) {
     mp_int_init_value(&b, 16);
 
     mp_int_swap(&a, &b);
-    result = (a.digits == &(a.single) && b.digits == &(b.single) &&
-              a.digits[0] == 16 && b.digits[0] == 1);
+    result = (MP_DIGITS(&a) == a.single && MP_DIGITS(&b) == b.single &&
+              MP_DIGITS(&a)[0] == 16 && MP_DIGITS(&b)[0] == 1);
 
     printf("REGRESSION: mp_int_swap() on self-stored values: %s\n",
            result ? "OK" : "FAILED");

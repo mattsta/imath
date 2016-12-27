@@ -239,7 +239,7 @@ void mp_int_random(mp_int z, int prec) {
             d = (d << CHAR_BIT) | (rand() & UCHAR_MAX);
         }
 
-        z->digits[i] = d;
+        MP_DIGITS(z)[i] = d;
     }
 
     (z)->used = prec;

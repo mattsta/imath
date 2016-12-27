@@ -45,7 +45,11 @@ typedef enum mp_result {
 
 typedef enum mp_boolean { MP_TRUE = 0, MP_FALSE = -1 } mp_boolean;
 
-typedef uint8_t mp_sign;
+typedef enum mp_sign {
+    MP_NEG = 1, /* value is strictly negative */
+    MP_ZPOS = 0 /* value is non-negative      */
+} mp_sign;
+
 typedef uint32_t mp_size;
 typedef int64_t mp_small;   /* must be a signed type */
 typedef uint64_t mp_usmall; /* must be an unsigned type */
@@ -53,14 +57,34 @@ typedef uint64_t mp_usmall; /* must be an unsigned type */
 typedef uint32_t mp_digit;
 typedef uint64_t mp_word;
 
+/* 'mpz' is a 64-byte struct */
 typedef struct mpz {
-    mp_digit *digits; /* ptr */
-    mp_digit single;  /* uint32_t */
-    mp_size alloc;    /* uint32_t */
-    mp_size used;     /* uint32_t */
-    mp_sign sign;     /* uint32_t */
+    mp_digit *currentDigits; /* tagged pointer with low bit being sign */
+    mp_digit single[12];     /* uint32_t * 12 */
+    mp_size alloc;           /* uint32_t */
+    mp_size used;            /* uint32_t */
 } mpz_t, *mp_int;
 
+#define MP_DIGITS_SET(z, ptr)                                                  \
+    do {                                                                       \
+        const mp_sign currentSign = MP_SIGN(z);                                \
+        (z)->currentDigits = (void *)((uintptr_t)(ptr) | currentSign);         \
+    } while (0)
+
+#define MP_DIGITS_MAKE_SINGLE(z) MP_DIGITS_SET(z, (z)->single)
+
+#define MP_DIGITS(z)                                                           \
+    ((mp_digit *)((uintptr_t)(z)->currentDigits & (~(uintptr_t)0x01)))
+
+#define MP_SIGN_SET(z, sign)                                                   \
+    do {                                                                       \
+        (z)->currentDigits =                                                   \
+            (void *)(((uintptr_t)MP_DIGITS(z)) | ((sign)&0x01));               \
+    } while (0)
+
+#define MP_SIGN(z) ((uintptr_t)(z)->currentDigits & 0x01)
+
+#define MP_COUNT(a) (sizeof(a) / sizeof(*a))
 #define MP_DIGIT_BIT (sizeof(mp_digit) * 8)
 #define MP_WORD_BIT (sizeof(mp_word) * 8)
 #define MP_SMALL_MIN INT64_MIN
@@ -80,13 +104,10 @@ typedef struct mpz {
  */
 #define MP_MULT_THRESH 22
 
-#define MP_DEFAULT_PREC 8 /* default memory allocation, in digits */
+#define MP_DEFAULT_PREC 64 /* default memory allocation, in digits */
 
-extern const mp_sign MP_NEG;
-extern const mp_sign MP_ZPOS;
-
-#define mp_int_is_odd(Z) ((Z)->digits[0] & 1)
-#define mp_int_is_even(Z) !((Z)->digits[0] & 1)
+#define mp_int_is_odd(Z) (MP_DIGITS(Z)[0] & 1)
+#define mp_int_is_even(Z) !(MP_DIGITS(Z)[0] & 1)
 
 mp_result mp_int_init(mp_int z);
 mp_int mp_int_alloc(void);

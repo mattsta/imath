@@ -12,3 +12,5 @@ bintest
 bug-swap
 *.o
 *.so
+build/
+*.dwarf

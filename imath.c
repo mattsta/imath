@@ -383,9 +383,9 @@ mp_result mp_int_init_size(mp_int z, mp_size prec) {
     mp_digit *d;
     if ((d = s_alloc(prec)) == NULL) {
         return MP_MEMORY;
-    } else {
-        MP_DIGITS_SET(z, d);
     }
+
+    MP_DIGITS_SET(z, d);
 
     MP_DIGITS(z)[0] = 0;
     z->used = 1;
@@ -575,7 +575,6 @@ mp_result mp_int_add(mp_int a, mp_int b, mp_int c) {
 
         c->used = uc;
         MP_SIGN_SET(c, MP_SIGN(a));
-
     } else {
         /* Different signs -- subtract magnitudes, preserve sign of greater */
         mp_int x, y;
@@ -651,7 +650,6 @@ mp_result mp_int_sub(mp_int a, mp_int b, mp_int c) {
 
         c->used = uc;
         MP_SIGN_SET(c, MP_SIGN(a));
-
     } else {
         /* Same signs -- subtract magnitudes */
         mp_int x, y;
@@ -777,9 +775,9 @@ mp_result mp_int_mul_pow2(mp_int a, mp_small p2, mp_int c) {
 
     if (s_qmul(c, (mp_size)p2)) {
         return MP_OK;
-    } else {
-        return MP_MEMORY;
     }
+
+    return MP_MEMORY;
 }
 
 mp_result mp_int_sqr(mp_int a, mp_int c) {
@@ -881,9 +879,9 @@ mp_result mp_int_div(mp_int a, mp_int b, mp_int q, mp_int r) {
         if (q && b != q) {
             if ((res = mp_int_copy(a, q)) != MP_OK) {
                 goto CLEANUP;
-            } else {
-                qout = q;
             }
+
+            qout = q;
         } else {
             qout = LAST_TEMP();
             SETUP(mp_int_init_copy(LAST_TEMP(), a));
@@ -892,9 +890,9 @@ mp_result mp_int_div(mp_int a, mp_int b, mp_int q, mp_int r) {
         if (r && a != r) {
             if ((res = mp_int_copy(b, r)) != MP_OK) {
                 goto CLEANUP;
-            } else {
-                rout = r;
             }
+
+            rout = r;
         } else {
             rout = LAST_TEMP();
             SETUP(mp_int_init_copy(LAST_TEMP(), b));
@@ -1147,15 +1145,15 @@ int mp_int_compare(mp_int a, mp_int b) {
            negative, the sense is reversed. */
         if (sa == MP_ZPOS) {
             return cmp;
-        } else {
-            return -cmp;
         }
+
+        return -cmp;
     } else {
         if (sa == MP_ZPOS) {
             return 1;
-        } else {
-            return -1;
         }
+
+        return -1;
     }
 }
 
@@ -1172,9 +1170,9 @@ int mp_int_compare_zero(mp_int z) {
         return 0;
     } else if (MP_SIGN(z) == MP_ZPOS) {
         return 1;
-    } else {
-        return -1;
     }
+
+    return -1;
 }
 
 int mp_int_compare_value(mp_int z, mp_small value) {
@@ -1187,9 +1185,9 @@ int mp_int_compare_value(mp_int z, mp_small value) {
         cmp = s_vcmp(z, value);
 
         return (vsign == MP_ZPOS) ? cmp : -cmp;
-    } else {
-        return (value < 0) ? 1 : -1;
     }
+
+    return (value < 0) ? 1 : -1;
 }
 
 int mp_int_compare_uvalue(mp_int z, mp_usmall uv) {
@@ -1197,9 +1195,9 @@ int mp_int_compare_uvalue(mp_int z, mp_usmall uv) {
 
     if (MP_SIGN(z) == MP_NEG) {
         return -1;
-    } else {
-        return s_uvcmp(z, uv);
     }
+
+    return s_uvcmp(z, uv);
 }
 
 mp_result mp_int_exptmod(mp_int a, mp_int b, mp_int m, mp_int c) {
@@ -1664,11 +1662,10 @@ mp_result mp_int_root(mp_int a, mp_small b, mp_int c) {
 
     if (MP_SIGN(a) == MP_NEG) {
         if (b % 2 == 0) {
-            return MP_UNDEF; /* root does not exist for negative a with even b
-                                */
-        } else {
-            flips = 1;
+            return MP_UNDEF; /* does not exist for negative a with even b */
         }
+
+        flips = 1;
     }
 
     SETUP(mp_int_init_copy(LAST_TEMP(), a));
@@ -1849,9 +1846,9 @@ mp_result mp_int_to_string(mp_int z, mp_size radix, char *str, size_t limit) {
     *str = '\0';
     if (cmp == 0) {
         return MP_OK;
-    } else {
-        return MP_TRUNC;
     }
+
+    return MP_TRUNC;
 }
 
 mp_result mp_int_string_len(mp_int z, mp_size radix) {
@@ -1940,9 +1937,9 @@ mp_result mp_int_read_cstring(mp_int z, mp_size radix, const char *str,
        remaining, so the caller can tell if the whole string was done */
     if (*str != '\0') {
         return MP_TRUNC;
-    } else {
-        return MP_OK;
     }
+
+    return MP_OK;
 }
 
 mp_result mp_int_count_bits(mp_int z) {
@@ -2102,9 +2099,9 @@ const char *mp_error_string(mp_result res) {
 
     if (s_error_msg[ix] != NULL) {
         return s_error_msg[ix];
-    } else {
-        return s_unknown_err;
     }
+
+    return s_unknown_err;
 }
 
 /*------------------------------------------------------------------------*/
@@ -2229,9 +2226,9 @@ STATIC int32_t s_ucmp(mp_int a, mp_int b) {
         return 1;
     } else if (ub > ua) {
         return -1;
-    } else {
-        return s_cdig(MP_DIGITS(a), MP_DIGITS(b), ua);
     }
+
+    return s_cdig(MP_DIGITS(a), MP_DIGITS(b), ua);
 }
 
 STATIC int32_t s_vcmp(mp_int a, mp_small v) {
@@ -3268,7 +3265,7 @@ STATIC mp_result s_udiv_knuth(mp_int u, mp_int v) {
         /************************************************************/
         /* D4: Multiply and subtract */
         /* note: The multiply was completed above so we only need to subtract
-          *here.
+         * here.
          **/
         s_usub(MP_DIGITS(&r), MP_DIGITS(&t), MP_DIGITS(&r), r.used, t.used);
 
@@ -3350,15 +3347,15 @@ STATIC char s_val2ch(int v, int32_t caps) {
 
     if (v < 10) {
         return v + '0';
-    } else {
-        char out = (v - 10) + 'a';
-
-        if (caps) {
-            return toupper(out);
-        } else {
-            return out;
-        }
     }
+
+    char out = (v - 10) + 'a';
+
+    if (caps) {
+        return toupper(out);
+    }
+
+    return out;
 }
 
 STATIC void s_2comp(void *buf_, size_t len) {

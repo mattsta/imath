@@ -2094,7 +2094,6 @@ const char *mp_error_string(mp_result res) {
 
     res = -res;
     for (ix = 0; ix < res && s_error_msg[ix] != NULL; ++ix) {
-        ;
     }
 
     if (s_error_msg[ix] != NULL) {
@@ -2473,6 +2472,7 @@ STATIC int32_t s_ksqr(mp_digit *da, mp_digit *dc, mp_size size_a) {
     return 1;
 }
 
+__attribute__((no_sanitize("unsigned-integer-overflow"))) /* t + t */
 STATIC void s_usqr(mp_digit *da, mp_digit *dc, mp_size size_a) {
     mp_size i, j;
     mp_word w;

@@ -1,6 +1,23 @@
 IMath
 =====
 
+## Branch Note
+
+---
+
+Starting in late 2016 we began refactoring and improving the code organization
+of imath somewhat. Since then our repo has diverged with the upstream repo, but
+also the divergence is mostly in code formatting and doc changes upstream has
+continued to pursue. Overall, imath is feature complete and functioning as needed,
+but this branch has nicer code organization for us to manage inside our own projects.
+
+We appreciate using imath for its ability to be compiled standalone with no
+dependencies required and is still highly performing compared to other simple-to-build
+bignum libraries.
+
+---
+
+
 Arbitrary precision integer and rational arithmetic library.
 
 IMath is an open-source ANSI C arbitrary precision integer and rational
